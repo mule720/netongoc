@@ -1,0 +1,41 @@
+# Python / Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.env
+.venv
+env/
+venv/
+db.sqlite3
+staticfiles/
+media/
+
+# Node / React
+node_modules/
+consult-solutions-updates1/dist/
+consult-solutions-updates1/.env
+consult-solutions-updates1/.env.local
+consult-solutions-updates1/.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GCP credentials — never commit these
+*.json
+!package.json
+!package-lock.json
+!tsconfig*.json
+!components.json
