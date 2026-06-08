@@ -1,0 +1,79 @@
+steps:
+  # ── BACKEND ──────────────────────────────────────────────────────────────
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-backend
+    args:
+      - build
+      - -t
+      - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/backend:$COMMIT_SHA
+      - backened/consultancy_backend
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-backend
+    waitFor: [build-backend]
+    args:
+      - push
+      - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/backend:$COMMIT_SHA
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: deploy-backend
+    waitFor: [push-backend]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - netongoc-backend
+      - --image=africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/backend:$COMMIT_SHA
+      - --region=africa-south1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --memory=512Mi
+      - --min-instances=0
+      - --max-instances=5
+      - --add-cloudsql-instances=project-0e17ffbe-041b-4ef7-946:africa-south1:netongoc-db
+      - --set-env-vars=DJANGO_DEBUG=False,DJANGO_ALLOWED_HOSTS=netongoc.com,www.netongoc.com,GCS_MEDIA_BUCKET=netongoc-media-project-0e17ffbe-041b-4ef7-946
+      - --set-secrets=DJANGO_SECRET_KEY=django-secret-key:latest,DATABASE_URL=database-url:latest
+      - --service-account=netongoc-backend@project-0e17ffbe-041b-4ef7-946.iam.gserviceaccount.com
+
+  # ── FRONTEND ─────────────────────────────────────────────────────────────
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-frontend
+    args:
+      - build
+      - -t
+      - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/frontend:$COMMIT_SHA
+      - consult-solutions-updates1
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-frontend
+    waitFor: [build-frontend]
+    args:
+      - push
+      - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/frontend:$COMMIT_SHA
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: deploy-frontend
+    waitFor: [push-frontend]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - netongoc-frontend
+      - --image=africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/frontend:$COMMIT_SHA
+      - --region=africa-south1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --memory=256Mi
+      - --min-instances=0
+      - --max-instances=5
+
+images:
+  - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/backend:$COMMIT_SHA
+  - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/frontend:$COMMIT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
