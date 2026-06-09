@@ -43,6 +43,8 @@ steps:
     id: build-frontend
     args:
       - build
+      - --build-arg
+      - VITE_API_URL=https://netongoc-backend-23h6yo3beq-bq.a.run.app
       - -t
       - africa-south1-docker.pkg.dev/$PROJECT_ID/netongoc/frontend:$COMMIT_SHA
       - consult-solutions-updates1
