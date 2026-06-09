@@ -33,7 +33,7 @@ steps:
       - --min-instances=0
       - --max-instances=5
       - --add-cloudsql-instances=project-0e17ffbe-041b-4ef7-946:africa-south1:netongoc-db
-      - --set-env-vars=^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=netongoc.com,www.netongoc.com|GCS_MEDIA_BUCKET=netongoc-media-project-0e17ffbe-041b-4ef7-946
+      - --set-env-vars=^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=netongoc.com,www.netongoc.com,netongoc-backend-23h6yo3beq-bq.a.run.app|GCS_MEDIA_BUCKET=netongoc-media-project-0e17ffbe-041b-4ef7-946
       - --set-secrets=DJANGO_SECRET_KEY=django-secret-key:latest,DATABASE_URL=database-url:latest
       - --service-account=netongoc-backend@project-0e17ffbe-041b-4ef7-946.iam.gserviceaccount.com
 
