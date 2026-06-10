@@ -31,8 +31,8 @@ from .models import SoftwareLicense
 logger = logging.getLogger(__name__)
 
 PLANS = [
-    {"id": "payroll_1yr",  "name": "Neton Payroll — 1 Year",  "months": 12, "price_zmw": "1200.00"},
-    {"id": "payroll_2yr",  "name": "Neton Payroll — 2 Years", "months": 24, "price_zmw": "2000.00"},
+    {"id": "payroll_1yr",  "name": "Neton Payroll — 1 Year",  "months": 12, "price_zmw": "5000.00"},
+    {"id": "payroll_2yr",  "name": "Neton Payroll — 2 Years", "months": 24, "price_zmw": "9000.00"},
 ]
 PLAN_MAP = {p["id"]: p for p in PLANS}
 
