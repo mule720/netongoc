@@ -42,7 +42,24 @@ INSTALLED_APPS = [
     'corsheaders',
     'graphene_django',
     'backend',
+    'licenses',
 ]
+
+# Email
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST     = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT     = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS  = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', 'Neton <noreply@netongoc.com>')
+
+SITE_URL = os.environ.get('SITE_URL', 'https://netongoc.com')
+
+# Neton Payment System integration (set when payment system is deployed)
+PAYMENT_SYSTEM_URL   = os.environ.get('PAYMENT_SYSTEM_URL', '')
+PAYMENT_SYSTEM_TOKEN = os.environ.get('PAYMENT_SYSTEM_TOKEN', '')
+LICENSE_WEBHOOK_SECRET = os.environ.get('LICENSE_WEBHOOK_SECRET', 'neton-webhook-secret-change-me')
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

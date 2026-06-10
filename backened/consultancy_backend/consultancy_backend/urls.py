@@ -28,6 +28,7 @@ except Exception:
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('backend.urls')),
+    path('api/licenses/', include('licenses.urls')),
 ]
 
 if GraphQLView is not None:
