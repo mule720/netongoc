@@ -30,9 +30,9 @@ urlpatterns = [
     path('', include('backend.urls')),
 ]
 
-if settings.DEBUG and GraphQLView is not None:
+if GraphQLView is not None:
     urlpatterns += [
-        path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True))),
+        path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=settings.DEBUG))),
     ]
 
 if settings.DEBUG:
