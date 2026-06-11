@@ -207,7 +207,7 @@ export default function AdminPanel() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-7 bg-slate-800 mb-6">
+        <TabsList className="grid w-full grid-cols-8 bg-slate-800 mb-6">
           <TabsTrigger value="consultancy">Consultancy</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
@@ -215,6 +215,7 @@ export default function AdminPanel() {
           <TabsTrigger value="companies">Companies</TabsTrigger>
           <TabsTrigger value="updates">Updates</TabsTrigger>
           <TabsTrigger value="software">🖥 Software</TabsTrigger>
+          <TabsTrigger value="licenses">🔑 Licenses</TabsTrigger>
         </TabsList>
 
         <TabsContent value="consultancy" className="space-y-3">
@@ -262,6 +263,10 @@ export default function AdminPanel() {
 
         <TabsContent value="software" className="space-y-4">
           <SoftwareAdminTab apiBase={`${import.meta.env.VITE_API_URL || ''}`} />
+        </TabsContent>
+
+        <TabsContent value="licenses" className="space-y-4">
+          <LicensesAdminTab apiBase={`${import.meta.env.VITE_API_URL || ''}`} />
         </TabsContent>
       </Tabs>
     </div>
@@ -382,6 +387,220 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
                   {v.is_active ? 'Hide' : 'Show'}
                 </Button>
               </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── License key generator + user log ────────────────────────────────────────
+
+type LicenseRow = {
+  id: string; company_name: string; contact_name: string; email: string; phone: string;
+  machine_id: string; license_key: string; status: string; is_revoked: boolean;
+  expires_at: string | null; activated_at: string | null; last_heartbeat: string | null;
+  last_seen: string | null; tamper_flag: boolean; tamper_count: number;
+  app_version: string; ip_address: string; notes: string; months: number; created_at: string;
+};
+
+function LicensesAdminTab({ apiBase }: { apiBase: string }) {
+  const { toast } = useToast();
+  const [form, setForm] = useState({ machine_id: '', company_name: '', contact_name: '', email: '', phone: '', months: '12', notes: '' });
+  const [generating, setGenerating] = useState(false);
+  const [generatedKey, setGeneratedKey] = useState('');
+  const [licenses, setLicenses] = useState<LicenseRow[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const [search, setSearch] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const fetchLicenses = async () => {
+    setLoadingList(true);
+    try {
+      const res = await fetch(`${apiBase}/api/licenses/admin/list/`, { credentials: 'include' });
+      const data = await res.json();
+      setLicenses(data.licenses || []);
+    } catch { toast({ title: 'Error', description: 'Could not load licenses.', variant: 'destructive' }); }
+    setLoadingList(false);
+  };
+
+  useState(() => { fetchLicenses(); });
+
+  const generate = async () => {
+    if (!form.machine_id.trim() || !form.company_name.trim()) {
+      toast({ title: 'Required', description: 'Machine ID and Company Name are required.', variant: 'destructive' }); return;
+    }
+    setGenerating(true);
+    setGeneratedKey('');
+    try {
+      const res = await fetch(`${apiBase}/api/licenses/admin/generate/`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, months: parseInt(form.months) || 12 }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setGeneratedKey(data.license_key);
+        toast({ title: '✅ Key Generated', description: `${data.company} — expires ${data.expires_at}` });
+        setForm({ machine_id: '', company_name: '', contact_name: '', email: '', phone: '', months: '12', notes: '' });
+        fetchLicenses();
+      } else {
+        toast({ title: 'Error', description: data.error || 'Generation failed.', variant: 'destructive' });
+      }
+    } catch { toast({ title: 'Error', description: 'Network error.', variant: 'destructive' }); }
+    setGenerating(false);
+  };
+
+  const revoke = async (id: string, isRevoked: boolean) => {
+    try {
+      await fetch(`${apiBase}/api/licenses/admin/revoke/${id}/`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: isRevoked ? 'unrevoke' : 'revoke' }),
+      });
+      fetchLicenses();
+      toast({ title: isRevoked ? 'License restored' : 'License revoked' });
+    } catch { toast({ title: 'Error', variant: 'destructive' }); }
+  };
+
+  const filtered = licenses.filter(l =>
+    [l.company_name, l.contact_name, l.email, l.machine_id, l.license_key].some(v =>
+      v?.toLowerCase().includes(search.toLowerCase())
+    )
+  );
+
+  const inp = 'bg-slate-800 border-slate-600 text-white placeholder-slate-400';
+
+  const statusColor = (l: LicenseRow) => {
+    if (l.is_revoked) return 'text-red-400';
+    if (l.status === 'active') return 'text-emerald-400';
+    if (l.status === 'expired') return 'text-amber-400';
+    return 'text-slate-400';
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Key Generator */}
+      <Card className="bg-slate-900/90 border-white/10">
+        <CardHeader>
+          <CardTitle className="text-amber-300">🔑 Generate License Key</CardTitle>
+          <CardDescription>Enter the client's Machine ID to generate an activation key immediately (no payment required).</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-300 text-xs mb-1 block">Machine ID *</Label>
+              <Input className={inp} placeholder="e.g. A3F2B8C1D4E5F6A7" value={form.machine_id}
+                onChange={e => setForm(p => ({ ...p, machine_id: e.target.value.toUpperCase() }))} />
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs mb-1 block">Company Name *</Label>
+              <Input className={inp} placeholder="ABC Company Ltd" value={form.company_name}
+                onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs mb-1 block">Contact Name</Label>
+              <Input className={inp} placeholder="Full name" value={form.contact_name}
+                onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs mb-1 block">Email</Label>
+              <Input className={inp} placeholder="email@company.com" value={form.email}
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs mb-1 block">Phone</Label>
+              <Input className={inp} placeholder="+260 9XX XXX XXX" value={form.phone}
+                onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs mb-1 block">Validity (months)</Label>
+              <select className={`w-full rounded-md border px-3 py-2 text-sm ${inp}`} value={form.months}
+                onChange={e => setForm(p => ({ ...p, months: e.target.value }))}>
+                {[1, 3, 6, 12, 24].map(m => <option key={m} value={m} style={{ color: '#1a1a1a' }}>{m} month{m > 1 ? 's' : ''}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <Label className="text-slate-300 text-xs mb-1 block">Internal Notes</Label>
+            <Input className={inp} placeholder="e.g. manual renewal, discount applied…" value={form.notes}
+              onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
+          </div>
+          <Button className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold" onClick={generate} disabled={generating}>
+            {generating ? 'Generating…' : '⚡ Generate Key'}
+          </Button>
+
+          {generatedKey && (
+            <div className="mt-3 p-4 rounded-lg border border-amber-500/40 bg-slate-950 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-xs text-slate-400 mb-1">License Key — send this to the client:</div>
+                <div className="font-mono text-xl font-bold text-amber-300 tracking-widest">{generatedKey}</div>
+              </div>
+              <Button size="sm" className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-400"
+                onClick={() => { navigator.clipboard.writeText(generatedKey); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+                {copied ? '✓ Copied' : 'Copy'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* User log */}
+      <Card className="bg-slate-900/90 border-white/10">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>📋 License User Log ({licenses.length})</span>
+            <Button size="sm" variant="outline" className="border-slate-500 text-white hover:bg-slate-700" onClick={fetchLicenses}>
+              {loadingList ? 'Loading…' : '↻ Refresh'}
+            </Button>
+          </CardTitle>
+          <CardDescription>Live status of all issued licenses. Red = tamper detected. Orange = never connected.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input className={inp} placeholder="Search by company, email, machine ID or key…" value={search}
+            onChange={e => setSearch(e.target.value)} />
+
+          {filtered.length === 0 && <p className="text-slate-400 text-sm py-4 text-center">No licenses found.</p>}
+
+          {filtered.map(l => (
+            <div key={l.id} className={`rounded-lg border p-3 space-y-2 ${l.tamper_flag ? 'border-red-500/50 bg-red-950/20' : l.is_revoked ? 'border-slate-600/50 bg-slate-900/40 opacity-60' : 'border-white/10'}`}>
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-white">{l.company_name}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${l.is_revoked ? 'bg-red-900 text-red-300' : l.status === 'active' ? 'bg-emerald-900 text-emerald-300' : l.status === 'expired' ? 'bg-amber-900 text-amber-300' : 'bg-slate-700 text-slate-300'}`}>
+                      {l.is_revoked ? 'REVOKED' : l.status.toUpperCase()}
+                    </span>
+                    {l.tamper_flag && <span className="text-xs bg-red-700 text-white px-2 py-0.5 rounded-full font-bold">⚠ TAMPER ×{l.tamper_count}</span>}
+                  </div>
+                  <div className="text-xs text-slate-400">{l.contact_name} · {l.email} · {l.phone}</div>
+                </div>
+                <Button size="sm"
+                  className={l.is_revoked ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-red-700 hover:bg-red-600 text-white'}
+                  onClick={() => revoke(l.id, l.is_revoked)}>
+                  {l.is_revoked ? 'Restore' : 'Revoke'}
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs text-slate-300">
+                <div><span className="text-slate-500">Machine ID:</span> <span className="font-mono">{l.machine_id}</span></div>
+                <div><span className="text-slate-500">Key:</span> <span className="font-mono text-amber-300">{l.license_key || '—'}</span></div>
+                <div><span className="text-slate-500">Expires:</span> {l.expires_at || '—'}</div>
+                <div><span className="text-slate-500">Months:</span> {l.months}</div>
+                <div><span className="text-slate-500">Activated:</span> {l.activated_at || 'Never'}</div>
+                <div><span className="text-slate-500">Last heartbeat:</span> {l.last_heartbeat || <span className="text-amber-400">Never connected</span>}</div>
+                <div><span className="text-slate-500">Last seen:</span> {l.last_seen || '—'}</div>
+                <div><span className="text-slate-500">App version:</span> {l.app_version || '—'}</div>
+                <div><span className="text-slate-500">IP:</span> {l.ip_address || '—'}</div>
+                <div><span className="text-slate-500">Created:</span> {l.created_at}</div>
+              </div>
+
+              {l.notes && (
+                <div className="text-xs text-slate-400 bg-slate-800/50 rounded p-2 mt-1">
+                  <span className="text-slate-500">Notes: </span>{l.notes.slice(0, 200)}{l.notes.length > 200 ? '…' : ''}
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
