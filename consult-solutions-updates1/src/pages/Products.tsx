@@ -254,20 +254,18 @@ function ProductCard({ product }: { product: typeof products[0] }) {
             }}>
             Buy Now — {product.price}
           </Link>
-          {product.downloadUrl && (
-            <a
-              href={product.downloadUrl}
-              style={{
-                display: "block", textAlign: "center",
-                background: "#fff", color: "#0C1F5C",
-                border: "2px solid #0C1F5C",
-                borderRadius: 8, padding: "0.7rem",
-                fontWeight: 700, fontSize: "0.9rem",
-                textDecoration: "none",
-              }}>
-              Download Trial
-            </a>
-          )}
+          <Link
+            to="/download"
+            style={{
+              display: "block", textAlign: "center",
+              background: "#fff", color: "#0C1F5C",
+              border: "2px solid #0C1F5C",
+              borderRadius: 8, padding: "0.7rem",
+              fontWeight: 700, fontSize: "0.9rem",
+              textDecoration: "none",
+            }}>
+            ⬇ Download (have a license?)
+          </Link>
         </div>
       </div>
     </div>

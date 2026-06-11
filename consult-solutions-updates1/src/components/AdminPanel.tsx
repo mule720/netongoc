@@ -207,13 +207,14 @@ export default function AdminPanel() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-6 bg-slate-800 mb-6">
+        <TabsList className="grid w-full grid-cols-7 bg-slate-800 mb-6">
           <TabsTrigger value="consultancy">Consultancy</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="hero">Hero</TabsTrigger>
           <TabsTrigger value="companies">Companies</TabsTrigger>
           <TabsTrigger value="updates">Updates</TabsTrigger>
+          <TabsTrigger value="software">🖥 Software</TabsTrigger>
         </TabsList>
 
         <TabsContent value="consultancy" className="space-y-3">
@@ -258,7 +259,133 @@ export default function AdminPanel() {
 
           <Card className="bg-slate-900/90 border-white/10"><CardHeader><CardTitle>Company Updates ({companyUpdates.length})</CardTitle></CardHeader><CardContent className="space-y-2">{companyUpdates.map(u=><div key={u.id} className="rounded-lg border border-white/10 p-3">{updateEditId===u.id ? <div className="space-y-2"><Input className="bg-slate-800" value={updateDraft.title} onChange={e=>setUpdateDraft(p=>({...p,title:e.target.value}))}/><Textarea className="bg-slate-800" value={updateDraft.content} onChange={e=>setUpdateDraft(p=>({...p,content:e.target.value}))}/><Input className="bg-slate-800" value={updateDraft.imageUrl} onChange={e=>setUpdateDraft(p=>({...p,imageUrl:e.target.value}))}/><div className="flex gap-2"><Button className={updateDraft.isPublished ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-white'} onClick={()=>setUpdateDraft(p=>({...p,isPublished:!p.isPublished}))}>{updateDraft.isPublished ? 'Published':'Draft'}</Button><Button className="bg-emerald-600 hover:bg-emerald-500 text-white" onClick={async()=>{await gql(MU13,{id:u.id,title:updateDraft.title,content:updateDraft.content,imageUrl:updateDraft.imageUrl,isPublished:updateDraft.isPublished}); setUpdateEditId(null); refresh();}}><Save className="mr-2 h-4 w-4"/>Save</Button><Button variant="outline" className="border-slate-500 text-white hover:bg-slate-700" onClick={()=>setUpdateEditId(null)}><X className="mr-2 h-4 w-4"/>Cancel</Button></div></div> : <div className="flex justify-between gap-2"><div><p className="font-semibold">{u.title}</p><p className="text-sm text-slate-300 line-clamp-2">{u.content}</p><p className="text-xs text-slate-400">{u.isPublished ? 'Published' : 'Draft'}</p></div><div className="flex gap-2"><Button variant="outline" className="border-slate-500 text-white hover:bg-slate-700" onClick={()=>{setUpdateEditId(u.id); setUpdateDraft({title:u.title,content:u.content,imageUrl:u.imageUrl,isPublished:u.isPublished});}}><Pencil className="mr-2 h-4 w-4"/>Edit</Button><Button variant="destructive" className="bg-rose-700 hover:bg-rose-600 text-white" onClick={async()=>{await gql(MU14,{id:u.id}); refresh();}}><Trash2 className="mr-2 h-4 w-4"/>Delete</Button></div></div>}</div>)}</CardContent></Card>
         </TabsContent>
+
+        <TabsContent value="software" className="space-y-4">
+          <SoftwareAdminTab apiBase={`${import.meta.env.VITE_API_URL || ''}`} />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ── Software versions admin tab ──────────────────────────────────────────────
+
+function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
+  const { toast } = useToast();
+  const [versions, setVersions] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({ version: '', release_notes: '', is_latest: true });
+  const [file, setFile] = useState<File | null>(null);
+
+  const load = () => {
+    fetch(`${apiBase}/api/software/versions/?product=neton_payroll`)
+      .then(r => r.json())
+      .then(d => setVersions(d.versions || []))
+      .catch(() => {});
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !form.version.trim()) { toast({ title: 'Error', description: 'Version and file are required.' }); return; }
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('product_slug', 'neton_payroll');
+    fd.append('version', form.version.trim());
+    fd.append('release_notes', form.release_notes);
+    fd.append('is_latest', String(form.is_latest));
+    fd.append('file', file);
+    try {
+      const res = await fetch(`${apiBase}/api/software/admin/upload/`, { method: 'POST', body: fd, credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) {
+        toast({ title: 'Uploaded!', description: `v${data.version} uploaded successfully.` });
+        setForm({ version: '', release_notes: '', is_latest: true });
+        setFile(null);
+        (document.getElementById('sw-file-input') as HTMLInputElement).value = '';
+        load();
+      } else {
+        toast({ title: 'Error', description: data.error || 'Upload failed.' });
+      }
+    } catch { toast({ title: 'Error', description: 'Network error.' }); }
+    setUploading(false);
+  };
+
+  const toggle = async (id: string, field: 'is_active' | 'is_latest', value: boolean) => {
+    await fetch(`${apiBase}/api/software/admin/toggle/${id}/`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value }),
+    });
+    load();
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Upload form */}
+      <Card className="bg-slate-900/90 border-white/10">
+        <CardHeader><CardTitle>Upload New Version</CardTitle><CardDescription>Old versions are kept — clients can download any version they need.</CardDescription></CardHeader>
+        <CardContent>
+          <form onSubmit={handleUpload} className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Version Number *</Label>
+                <Input className="bg-slate-800 mt-1" placeholder="e.g. 1.2.0" value={form.version} onChange={e => setForm(p => ({ ...p, version: e.target.value }))} />
+              </div>
+              <div className="flex items-end gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.is_latest} onChange={e => setForm(p => ({ ...p, is_latest: e.target.checked }))} />
+                  <span className="text-sm text-slate-300">Mark as Latest (recommended download)</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <Label>Release Notes</Label>
+              <Textarea className="bg-slate-800 mt-1" placeholder="What's new in this version..." value={form.release_notes} onChange={e => setForm(p => ({ ...p, release_notes: e.target.value }))} rows={3} />
+            </div>
+            <div>
+              <Label>Software File (.exe / .zip) *</Label>
+              <Input id="sw-file-input" type="file" className="bg-slate-800 mt-1" accept=".exe,.zip,.msi" onChange={e => setFile(e.target.files?.[0] || null)} />
+              {file && <p className="text-xs text-slate-400 mt-1">{file.name} — {(file.size / 1024 / 1024).toFixed(1)} MB</p>}
+            </div>
+            <Button type="submit" disabled={uploading} className="bg-amber-500 text-black hover:bg-amber-400 font-bold">
+              {uploading ? 'Uploading…' : '⬆ Upload Version'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Version list */}
+      <Card className="bg-slate-900/90 border-white/10">
+        <CardHeader><CardTitle>All Versions ({versions.length})</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          {versions.length === 0 && <p className="text-slate-400 text-sm">No versions uploaded yet.</p>}
+          {versions.map((v: any) => (
+            <div key={v.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 p-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white">v{v.version}</span>
+                  {v.is_latest && <span className="bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-full">LATEST</span>}
+                  {!v.is_active && <span className="bg-slate-600 text-slate-300 text-xs px-2 py-0.5 rounded-full">HIDDEN</span>}
+                </div>
+                <div className="text-xs text-slate-400 mt-1">{v.file_name} · {v.file_size_mb} MB · {v.uploaded_at}</div>
+                {v.release_notes && <div className="text-xs text-slate-300 mt-1">{v.release_notes}</div>}
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button size="sm" variant="outline" className="border-slate-500 text-white hover:bg-slate-700 text-xs"
+                  onClick={() => toggle(v.id, 'is_latest', !v.is_latest)}>
+                  {v.is_latest ? 'Unset Latest' : 'Set Latest'}
+                </Button>
+                <Button size="sm" variant="outline" className={`text-xs ${v.is_active ? 'border-rose-500 text-rose-400 hover:bg-rose-900' : 'border-emerald-500 text-emerald-400 hover:bg-emerald-900'}`}
+                  onClick={() => toggle(v.id, 'is_active', !v.is_active)}>
+                  {v.is_active ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

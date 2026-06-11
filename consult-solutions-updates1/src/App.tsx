@@ -9,6 +9,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import PayrollBuy from "./pages/PayrollBuy";
 import Products from "./pages/Products";
+import Download from "./pages/Download";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/download" element={<Download />} />
             <Route path="/payroll/buy" element={<PayrollBuy />} />
             <Route path="/payroll/confirm" element={<PayrollBuy />} />
             <Route path="*" element={<NotFound />} />

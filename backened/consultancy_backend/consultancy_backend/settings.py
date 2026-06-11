@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'graphene_django',
     'backend',
     'licenses',
+    'software',
 ]
 
 # Email

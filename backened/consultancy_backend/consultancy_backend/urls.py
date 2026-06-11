@@ -29,6 +29,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('backend.urls')),
     path('api/licenses/', include('licenses.urls')),
+    path('api/software/', include('software.urls')),
 ]
 
 if GraphQLView is not None:
