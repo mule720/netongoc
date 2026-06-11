@@ -132,7 +132,7 @@ export default function Download() {
                   width: "100%", padding: "0.8rem 1rem", borderRadius: 8,
                   border: "2px solid #e8ecf4", fontSize: "1rem", fontFamily: "monospace",
                   letterSpacing: "2px", boxSizing: "border-box", marginBottom: "1rem",
-                  outline: "none",
+                  outline: "none", color: "#1a1a1a", background: "#fff",
                 }}
               />
               {step === "error" && (

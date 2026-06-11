@@ -73,7 +73,7 @@ export default function ContactPage() {
     setConsultLoading(false);
   };
 
-  const inp: React.CSSProperties = { width: '100%', padding: '0.65rem 0.9rem', border: '2px solid #e8ecf4', borderRadius: 8, fontSize: '0.9rem', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' };
+  const inp: React.CSSProperties = { width: '100%', padding: '0.65rem 0.9rem', border: '2px solid #e8ecf4', borderRadius: 8, fontSize: '0.9rem', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff' };
   const lbl: React.CSSProperties = { display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#333', marginBottom: '0.3rem' };
 
   return (
@@ -166,9 +166,9 @@ export default function ContactPage() {
             </div>
             <div>
               <label style={lbl}>Service Required *</label>
-              <select style={{ ...inp, background: '#fff' }} required value={consult.service} onChange={e => setConsult(p => ({ ...p, service: e.target.value }))}>
-                <option value="">Select a service…</option>
-                {services.map(s => <option key={s} value={s}>{s}</option>)}
+              <select style={{ ...inp, background: '#fff', color: '#1a1a1a' }} required value={consult.service} onChange={e => setConsult(p => ({ ...p, service: e.target.value }))}>
+                <option value="" style={{ color: '#888' }}>Select a service…</option>
+                {services.map(s => <option key={s} value={s} style={{ color: '#1a1a1a' }}>{s}</option>)}
               </select>
             </div>
             <div><label style={lbl}>Tell Us More</label><textarea style={{ ...inp, minHeight: 100, resize: 'vertical' }} value={consult.message} onChange={e => setConsult(p => ({ ...p, message: e.target.value }))} placeholder="Describe your challenge or goal…" /></div>

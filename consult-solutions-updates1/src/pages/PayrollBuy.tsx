@@ -241,7 +241,7 @@ export default function PayrollBuy() {
 }
 
 const labelStyle: React.CSSProperties = { display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#444", marginBottom: "4px" };
-const inputStyle: React.CSSProperties = { width: "100%", padding: "0.6rem 0.8rem", border: "1px solid #ddd", borderRadius: "6px", fontSize: "0.9rem", boxSizing: "border-box" };
+const inputStyle: React.CSSProperties = { width: "100%", padding: "0.6rem 0.8rem", border: "1px solid #ddd", borderRadius: "6px", fontSize: "0.9rem", boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
 
 function Field({ label, help, children }: { label: string; help?: string; children: React.ReactNode }) {
   return (
