@@ -32,24 +32,24 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, onSectionClick }) => {
           </div>
           
           <nav className="hidden md:flex items-center space-x-6">
-            <button onClick={() => onSectionClick('home')} className="hover:text-amber-300 transition-colors font-medium">
+            <Link to="/" className="hover:text-amber-300 transition-colors font-medium" style={{ textDecoration: 'none', color: 'inherit' }}>
               Home
-            </button>
-            <button onClick={() => onSectionClick('services')} className="hover:text-amber-300 transition-colors font-medium">
+            </Link>
+            <Link to="/services" className="hover:text-amber-300 transition-colors font-medium" style={{ textDecoration: 'none', color: 'inherit' }}>
               Services
-            </button>
-            <button onClick={() => onSectionClick('clients')} className="hover:text-amber-300 transition-colors font-medium">
+            </Link>
+            <Link to="/clients" className="hover:text-amber-300 transition-colors font-medium" style={{ textDecoration: 'none', color: 'inherit' }}>
               Clients
-            </button>
-            <button onClick={() => onSectionClick('contact')} className="hover:text-amber-300 transition-colors font-medium">
+            </Link>
+            <Link to="/contact" className="hover:text-amber-300 transition-colors font-medium" style={{ textDecoration: 'none', color: 'inherit' }}>
               Contact Us
-            </button>
-            <button onClick={() => onSectionClick('updates')} className="hover:text-amber-300 transition-colors font-medium">
+            </Link>
+            <Link to="/updates" className="hover:text-amber-300 transition-colors font-medium" style={{ textDecoration: 'none', color: 'inherit' }}>
               Updates
-            </button>
-            <button onClick={() => onSectionClick('about')} className="hover:text-amber-300 transition-colors font-medium">
+            </Link>
+            <Link to="/about" className="hover:text-amber-300 transition-colors font-medium" style={{ textDecoration: 'none', color: 'inherit' }}>
               About Us
-            </button>
+            </Link>
             <Link
               to="/products"
               className="hover:text-amber-300 transition-colors font-medium"
