@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -121,6 +122,9 @@ export default function PayrollBuy() {
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <Link to="/" style={{ display: "inline-block", marginBottom: "0.75rem", fontSize: "0.8rem", color: "#0C1F5C", textDecoration: "none", fontWeight: 600 }}>
+            ← Back to Home
+          </Link>
           <div style={{ fontSize: "2rem", fontWeight: 800, color: "#0C1F5C", letterSpacing: "1px" }}>NETON</div>
           <div style={{ fontSize: "1rem", color: "#666" }}>Payroll — License Purchase</div>
         </div>

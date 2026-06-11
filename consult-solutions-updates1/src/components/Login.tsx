@@ -111,9 +111,9 @@ export default function Login({ onLoginSuccess }: { onLoginSuccess?: () => void 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <CardTitle className="text-2xl text-white">{isRegister ? 'Create Admin Account' : 'Admin Login'}</CardTitle>
+          <CardTitle className="text-2xl text-white">Admin Login</CardTitle>
           <CardDescription className="text-slate-300">
-            {isRegister ? 'Register a new admin account' : 'Sign in to access the admin dashboard'}
+            Sign in to access the admin dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,39 +142,24 @@ export default function Login({ onLoginSuccess }: { onLoginSuccess?: () => void 
                 required
               />
             </div>
-            {isRegister && (
-              <div>
-                <Label htmlFor="passwordConfirm" className="text-white">Confirm Password</Label>
-                <Input
-                  id="passwordConfirm"
-                  type="password"
-                  value={passwordConfirm}
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-400"
-                  placeholder="Confirm your password"
-                  required
-                />
-              </div>
-            )}
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-3 shadow-lg shadow-blue-500/30 hover:opacity-95"
               disabled={loading}
             >
-              {loading ? (isRegister ? 'Creating account...' : 'Signing in...') : (isRegister ? 'Create Account' : 'Sign In')}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-white/10 text-white hover:bg-slate-800"
-              onClick={() => {
-                setIsRegister((prev) => !prev);
-                setPasswordConfirm('');
-              }}
-              disabled={loading}
-            >
-              {isRegister ? 'Already have an account? Sign in' : 'Need an account? Register'}
-            </Button>
+            {isRegister && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-white/10 text-white hover:bg-slate-800"
+                onClick={() => { setIsRegister(false); setPasswordConfirm(''); }}
+                disabled={loading}
+              >
+                Back to Sign In
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>
