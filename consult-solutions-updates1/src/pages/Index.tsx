@@ -3,12 +3,11 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileMenu from '@/components/MobileMenu';
-import { ArrowRight, Building2, Star, Award, Target, Users, Lightbulb, CheckCircle, Newspaper, Monitor } from 'lucide-react';
+import { ArrowRight, Building2, Star, Award, CheckCircle, Newspaper, Monitor } from 'lucide-react';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 interface HeroContent { tagline: string; heading: string; description: string; ctaText: string; backgroundImageUrl: string; overlayColor: string; overlayOpacity: number; }
 interface Service { id: string; title: string; description: string; iconKey: string; serviceAreas: string[]; }
-interface Client { id: string; name: string; logo: string; industry: string; }
 interface Update { id: string; title: string; content: string; imageUrl?: string; createdAt: string; }
 interface Stats { clientSatisfaction: string; yearsExperience: string; }
 
@@ -38,11 +37,9 @@ export default function Index() {
   // data
   const [hero, setHero] = useState<HeroContent>({ tagline: '', heading: '', description: '', ctaText: 'Get Started', backgroundImageUrl: '', overlayColor: '#0C1F5C', overlayOpacity: 0.75 });
   const [services, setServices] = useState<Service[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const [updates, setUpdates] = useState<Update[]>([]);
   const [stats, setStats] = useState<Stats>({ clientSatisfaction: '98%', yearsExperience: '15+' });
   const [companiesServed, setCompaniesServed] = useState(0);
-  const [clientIdx, setClientIdx] = useState(0);
 
   useEffect(() => {
     GQL(`query { activeHeroContent { tagline heading description ctaText backgroundImageUrl overlayColor overlayOpacity } }`)
@@ -53,9 +50,8 @@ export default function Index() {
       .then(d => setServices((d?.data?.services || []).map((s: any) => ({ ...s, serviceAreas: parseAreas(s.serviceAreas) }))))
       .catch(() => {});
 
-    GQL(`query { clients(featured: true) { id name logo industry } companyStats { clientSatisfaction yearsExperience } companiesServed }`)
+    GQL(`query { companyStats { clientSatisfaction yearsExperience } companiesServed }`)
       .then(d => {
-        setClients(d?.data?.clients || []);
         setCompaniesServed(Number(d?.data?.companiesServed || 0));
         if (d?.data?.companyStats) setStats(d.data.companyStats);
       })
@@ -65,19 +61,6 @@ export default function Index() {
       .then(d => setUpdates(d?.data?.companyUpdates || []))
       .catch(() => {});
   }, []);
-
-  // client carousel
-  useEffect(() => {
-    if (clients.length < 2) return;
-    const t = setInterval(() => setClientIdx(i => (i + 1) % Math.max(1, Math.ceil(clients.length / 4))), 3000);
-    return () => clearInterval(t);
-  }, [clients.length]);
-
-  const visibleClients = clients.length > 0
-    ? Array.from({ length: Math.min(4, clients.length) }, (_, i) => clients[(clientIdx * 4 + i) % clients.length])
-    : [];
-
-  const latestUpdate = updates[0] || null;
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f9fc', fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -175,78 +158,37 @@ export default function Index() {
         </div>
       </div>
 
-      {/* ── WHY NETON ────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'linear-gradient(135deg, #0C1F5C 0%, #1a3a8f 60%, #0C1F5C 100%)', padding: '4.5rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(245,194,0,0.07)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={sectionLabel}>Why Choose Us</span>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', fontWeight: 900, margin: '0 0 0.75rem' }}>
-              Built on <span style={{ color: '#F5C200' }}>Trust</span> &amp; Results
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.72)', maxWidth: 500, margin: '0 auto', fontSize: '1rem', lineHeight: 1.7 }}>
-              Our client-centric philosophy means we're invested in your success at every step.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-            {[
-              { icon: Award, title: 'Deep Expertise', desc: 'Our team brings sector-spanning knowledge — from finance and compliance to technology and procurement.' },
-              { icon: Lightbulb, title: 'Innovation First', desc: 'We leverage data analytics and modern technology to help you make smarter, faster business decisions.' },
-              { icon: Users, title: 'True Partnership', desc: 'We work alongside you, sharing knowledge and building long-term relationships that outlast any single project.' },
-              { icon: Target, title: 'Measurable Impact', desc: 'Every engagement is tied to outcomes. We track progress and adjust strategy to ensure your goals are met.' },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} style={{ background: 'rgba(255,255,255,0.07)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.12)', padding: '1.75rem' }}>
-                <div style={{ width: 44, height: 44, background: '#F5C200', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                  <Icon size={22} color="#0C1F5C" />
-                </div>
-                <h3 style={{ color: '#fff', fontWeight: 800, fontSize: '1rem', margin: '0 0 0.5rem' }}>{title}</h3>
-                <p style={{ color: 'rgba(255,255,255,0.68)', fontSize: '0.88rem', lineHeight: 1.65, margin: 0 }}>{desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-            <Link to="/about" style={goldBtn}>Learn About NETON <ArrowRight size={15} /></Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ── CLIENTS TEASER ───────────────────────────────────────────────────── */}
-      {clients.length > 0 && (
+      {/* ── UPDATES TEASER ───────────────────────────────────────────────────── */}
+      {updates.length > 0 && (
         <div style={{ background: '#f8f9fc', padding: '4.5rem 1.5rem', borderTop: '1px solid #e8ecf4' }}>
           <div style={{ maxWidth: 1000, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <span style={{ ...sectionLabel, background: 'rgba(12,31,92,0.08)', color: '#0C1F5C', border: '1px solid rgba(12,31,92,0.15)' }}>Trusted By</span>
+              <span style={{ ...sectionLabel, background: 'rgba(12,31,92,0.08)', color: '#0C1F5C', border: '1px solid rgba(12,31,92,0.15)' }}>News &amp; Updates</span>
               <h2 style={{ color: '#0C1F5C', fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', fontWeight: 900, margin: '0 0 0.75rem' }}>
-                Companies That <span style={{ color: '#F5C200' }}>Trust Us</span>
+                Latest from <span style={{ color: '#F5C200' }}>NETON</span>
               </h2>
               <p style={{ color: '#666', maxWidth: 460, margin: '0 auto', fontSize: '1rem', lineHeight: 1.7 }}>
-                Partnering with leading organisations across Zambia and the region.
+                Stay informed with our latest announcements, insights and company news.
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-              {visibleClients.map((c, i) => (
-                <div key={`${c.id}-${i}`} style={{ ...card, textAlign: 'center', padding: '1.5rem 1rem' }}>
-                  <div style={{ fontSize: '2.4rem', marginBottom: '0.5rem' }}>{c.logo}</div>
-                  <div style={{ color: '#0C1F5C', fontWeight: 700, fontSize: '0.92rem' }}>{c.name}</div>
-                  <div style={{ color: '#aaa', fontSize: '0.77rem', marginTop: '0.2rem' }}>{c.industry}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+              {updates.slice(0, 3).map((u, i) => (
+                <div key={u.id} style={{ ...card, overflow: 'hidden', padding: 0 }}>
+                  <div style={{ height: 4, background: i === 0 ? 'linear-gradient(90deg, #0C1F5C, #F5C200)' : 'linear-gradient(90deg, #F5C200, #0C1F5C)' }} />
+                  {u.imageUrl && <img src={u.imageUrl} alt={u.title} style={{ width: '100%', height: 140, objectFit: 'cover' }} />}
+                  <div style={{ padding: '1.25rem' }}>
+                    {i === 0 && <span style={{ background: '#F5C200', color: '#0C1F5C', borderRadius: 999, padding: '0.15rem 0.6rem', fontSize: '0.68rem', fontWeight: 800, marginBottom: '0.5rem', display: 'inline-block' }}>Latest</span>}
+                    <div style={{ color: '#aaa', fontSize: '0.75rem', marginBottom: '0.4rem' }}>{fmtDate(u.createdAt)}</div>
+                    <h3 style={{ color: '#0C1F5C', fontWeight: 800, fontSize: '0.95rem', margin: '0 0 0.5rem', lineHeight: 1.35 }}>{u.title}</h3>
+                    <p style={{ color: '#666', fontSize: '0.83rem', lineHeight: 1.6, margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{u.content}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* dots */}
-            {clients.length > 4 && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
-                {Array.from({ length: Math.ceil(clients.length / 4) }).map((_, i) => (
-                  <button key={i} onClick={() => setClientIdx(i)} style={{ width: 8, height: 8, borderRadius: '50%', border: 'none', cursor: 'pointer', background: clientIdx === i ? '#F5C200' : '#ddd' }} />
-                ))}
-              </div>
-            )}
-
             <div style={{ textAlign: 'center' }}>
-              <Link to="/clients" style={navyBtn}>See All Clients <ArrowRight size={15} /></Link>
+              <Link to="/updates" style={navyBtn}><Newspaper size={15} /> View All Updates</Link>
             </div>
           </div>
         </div>
@@ -254,14 +196,27 @@ export default function Index() {
 
       {/* ── SOFTWARE SPOTLIGHT ───────────────────────────────────────────────── */}
       <div style={{ background: '#fff', padding: '4.5rem 1.5rem', borderTop: '1px solid #e8ecf4' }}>
+        {/* section heading */}
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <span style={sectionLabel}>⚡ Smart Business Software</span>
+          <h2 style={{ color: '#0C1F5C', fontSize: 'clamp(1.8rem, 4.5vw, 2.6rem)', fontWeight: 900, margin: '0 0 0.75rem', lineHeight: 1.15 }}>
+            Built for Modern <span style={{ color: '#F5C200' }}>African Business</span>
+          </h2>
+          <p style={{ color: '#666', maxWidth: 560, margin: '0 auto', fontSize: '1rem', lineHeight: 1.7 }}>
+            Purpose-built desktop software that automates your compliance, payroll and reporting — so you focus on growing, not paperwork.
+          </p>
+        </div>
+
         <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'center' }}>
           <div>
-            <span style={sectionLabel}>Our Software</span>
-            <h2 style={{ color: '#0C1F5C', fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', fontWeight: 900, margin: '0 0 1rem', lineHeight: 1.2 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(245,194,0,0.12)', border: '1px solid rgba(245,194,0,0.3)', borderRadius: 999, padding: '0.25rem 0.85rem', fontSize: '0.72rem', fontWeight: 700, color: '#0C1F5C', letterSpacing: '0.5px', marginBottom: '0.9rem' }}>
+              <Monitor size={12} /> DESKTOP APP · ZAMBIA COMPLIANT
+            </div>
+            <h3 style={{ color: '#0C1F5C', fontSize: 'clamp(1.5rem, 3.5vw, 2rem)', fontWeight: 900, margin: '0 0 1rem', lineHeight: 1.2 }}>
               Neton Payroll <span style={{ color: '#F5C200' }}>Pro</span>
-            </h2>
+            </h3>
             <p style={{ color: '#555', fontSize: '1rem', lineHeight: 1.75, marginBottom: '1.25rem' }}>
-              A fully featured payroll management system built for Zambian businesses. Handle employee records, monthly payslips, NAPSA &amp; NHIMA contributions, and income tax — all in one desktop app.
+              The smarter way to run payroll in Zambia. Automatically calculates PAYE, NAPSA &amp; NHIMA, generates payslips, and keeps you audit-ready — all offline, all secure.
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.75rem' }}>
               {['Automated PAYE, NAPSA & NHIMA', 'Print & email payslips instantly', 'Offline-first — works without internet', 'Machine-locked licensing for security'].map(f => (
@@ -293,37 +248,6 @@ export default function Index() {
         </div>
       </div>
 
-      {/* ── LATEST UPDATE ────────────────────────────────────────────────────── */}
-      {latestUpdate && (
-        <div style={{ background: '#f8f9fc', padding: '4.5rem 1.5rem', borderTop: '1px solid #e8ecf4' }}>
-          <div style={{ maxWidth: 900, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <span style={{ ...sectionLabel, background: 'rgba(12,31,92,0.08)', color: '#0C1F5C', border: '1px solid rgba(12,31,92,0.15)' }}>News &amp; Updates</span>
-              <h2 style={{ color: '#0C1F5C', fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', fontWeight: 900, margin: 0 }}>
-                Latest from <span style={{ color: '#F5C200' }}>NETON</span>
-              </h2>
-            </div>
-
-            <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden', padding: 0 }}>
-              <div style={{ height: 5, background: 'linear-gradient(90deg, #0C1F5C, #F5C200)' }} />
-              {latestUpdate.imageUrl && (
-                <img src={latestUpdate.imageUrl} alt={latestUpdate.title} style={{ width: '100%', height: 240, objectFit: 'cover' }} />
-              )}
-              <div style={{ padding: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  <span style={{ background: '#F5C200', color: '#0C1F5C', borderRadius: 999, padding: '0.15rem 0.65rem', fontSize: '0.7rem', fontWeight: 800 }}>Latest</span>
-                  <span style={{ color: '#aaa', fontSize: '0.8rem' }}>{fmtDate(latestUpdate.createdAt)}</span>
-                </div>
-                <h3 style={{ color: '#0C1F5C', fontWeight: 900, fontSize: '1.3rem', margin: '0 0 0.75rem' }}>{latestUpdate.title}</h3>
-                <p style={{ color: '#555', fontSize: '0.92rem', lineHeight: 1.75, margin: '0 0 1.5rem', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {latestUpdate.content}
-                </p>
-                <Link to="/updates" style={navyBtn}><Newspaper size={15} /> View All Updates</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── CTA BAND ─────────────────────────────────────────────────────────── */}
       <div style={{ background: 'linear-gradient(135deg, #0C1F5C 0%, #1a3a8f 50%, #0C1F5C 100%)', padding: '5rem 1.5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
