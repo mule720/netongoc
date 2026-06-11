@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import PayrollBuy from "./pages/PayrollBuy";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/payroll/buy" element={<PayrollBuy />} />
             <Route path="/payroll/confirm" element={<PayrollBuy />} />
             <Route path="*" element={<NotFound />} />

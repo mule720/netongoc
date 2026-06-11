@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, Facebook, Linkedin, Youtube, Phone, Mail } from 'lucide-react';
 
@@ -49,6 +50,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, onSectionClick }) => {
             <button onClick={() => onSectionClick('about')} className="hover:text-amber-300 transition-colors font-medium">
               About Us
             </button>
+            <Link
+              to="/products"
+              className="hover:text-amber-300 transition-colors font-medium"
+              style={{ background: "#F5C200", color: "#0C1F5C", borderRadius: "6px", padding: "0.35rem 0.9rem", fontWeight: 800, textDecoration: "none" }}
+            >
+              🛒 Products
+            </Link>
           </nav>
           
           <div className="hidden md:flex items-center space-x-4">
