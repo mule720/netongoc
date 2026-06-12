@@ -10,7 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 
 const _LS_KEY = 'neton_admin_token';
-const _getAdminToken = () => localStorage.getItem(_LS_KEY) || import.meta.env.VITE_ADMIN_TOKEN || '';
+const _getAdminToken = () => {
+  try { return localStorage.getItem(_LS_KEY) || import.meta.env.VITE_ADMIN_TOKEN || ''; }
+  catch { return import.meta.env.VITE_ADMIN_TOKEN || ''; }
+};
 const _adminHdr = (extra?: Record<string, string>) => ({
   'Content-Type': 'application/json',
   'X-Admin-Token': _getAdminToken(),
