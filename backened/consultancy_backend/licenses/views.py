@@ -58,9 +58,17 @@ def _cors(response, request=None):
     allowed = origin if origin in _ALLOWED_ORIGINS else "https://netongoc.com"
     response["Access-Control-Allow-Origin"] = allowed
     response["Access-Control-Allow-Credentials"] = "true"
-    response["Access-Control-Allow-Headers"] = "Content-Type, X-Webhook-Signature, X-CSRFToken"
+    response["Access-Control-Allow-Headers"] = "Content-Type, X-Webhook-Signature, X-CSRFToken, X-Admin-Token"
     response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
+
+
+def _is_admin(request) -> bool:
+    secret = os.environ.get("ADMIN_SECRET", "")
+    token  = request.headers.get("X-Admin-Token", "")
+    if secret and token and token == secret:
+        return True
+    return request.user.is_authenticated and request.user.is_staff
 
 
 def _client_ip(request):
@@ -272,7 +280,7 @@ class AdminGenerateView(View):
         return _cors(r)
 
     def post(self, request):
-        if not request.user.is_authenticated or not request.user.is_staff:
+        if not _is_admin(request):
             return _cors(JsonResponse({"error": "Admin access required."}, status=403))
 
         try:
@@ -345,7 +353,7 @@ class AdminListView(View):
         return _cors(r)
 
     def get(self, request):
-        if not request.user.is_authenticated or not request.user.is_staff:
+        if not _is_admin(request):
             return _cors(JsonResponse({"error": "Admin access required."}, status=403))
 
         lics = SoftwareLicense.objects.all().order_by('-created_at')[:200]
@@ -386,7 +394,7 @@ class AdminRevokeView(View):
         return _cors(r)
 
     def post(self, request, license_id):
-        if not request.user.is_authenticated or not request.user.is_staff:
+        if not _is_admin(request):
             return _cors(JsonResponse({"error": "Admin access required."}, status=403))
 
         try:

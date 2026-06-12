@@ -9,6 +9,13 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 
+const _ADMIN_TOKEN = import.meta.env.VITE_ADMIN_TOKEN || '';
+const _adminHdr = (extra?: Record<string, string>) => ({
+  'Content-Type': 'application/json',
+  'X-Admin-Token': _ADMIN_TOKEN,
+  ...extra,
+});
+
 type ReqStatus = 'new' | 'in_progress' | 'completed' | 'archived';
 type ConsultancyRequest = { id: string; name: string; email: string; company: string; phone: string; service: string; message: string; status: ReqStatus; createdAt: string };
 type ConsultancyPlanTask = { id: string; taskTitle: string; dueDate?: string | null; isCompleted: boolean; order: number };
@@ -303,7 +310,7 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
       const reqRes = await fetch(`${apiBase}/api/software/admin/request-upload/`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: _adminHdr(),
         body: JSON.stringify({
           file_name: file.name,
           content_type: file.type || 'application/octet-stream',
@@ -330,7 +337,7 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
       const confRes = await fetch(`${apiBase}/api/software/admin/confirm-upload/`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: _adminHdr(),
         body: JSON.stringify({
           gcs_path: reqData.gcs_path,
           version: reqData.version,
@@ -359,7 +366,7 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
   const toggle = async (id: string, field: 'is_active' | 'is_latest', value: boolean) => {
     await fetch(`${apiBase}/api/software/admin/toggle/${id}/`, {
       method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _adminHdr(),
       body: JSON.stringify({ [field]: value }),
     });
     load();
@@ -457,7 +464,7 @@ function LicensesAdminTab({ apiBase }: { apiBase: string }) {
   const fetchLicenses = async () => {
     setLoadingList(true);
     try {
-      const res = await fetch(`${apiBase}/api/licenses/admin/list/`, { credentials: 'include' });
+      const res = await fetch(`${apiBase}/api/licenses/admin/list/`, { credentials: 'include', headers: _adminHdr() });
       const data = await res.json();
       setLicenses(data.licenses || []);
     } catch { toast({ title: 'Error', description: 'Could not load licenses.', variant: 'destructive' }); }
@@ -475,7 +482,7 @@ function LicensesAdminTab({ apiBase }: { apiBase: string }) {
     try {
       const res = await fetch(`${apiBase}/api/licenses/admin/generate/`, {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: _adminHdr(),
         body: JSON.stringify({ ...form, months: parseInt(form.months) || 12 }),
       });
       const data = await res.json();
@@ -495,7 +502,7 @@ function LicensesAdminTab({ apiBase }: { apiBase: string }) {
     try {
       await fetch(`${apiBase}/api/licenses/admin/revoke/${id}/`, {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: _adminHdr(),
         body: JSON.stringify({ action: isRevoked ? 'unrevoke' : 'revoke' }),
       });
       fetchLicenses();

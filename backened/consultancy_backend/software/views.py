@@ -21,9 +21,18 @@ def _cors(response, request=None):
     allowed = origin if origin in _ALLOWED_ORIGINS else "https://netongoc.com"
     response["Access-Control-Allow-Origin"] = allowed
     response["Access-Control-Allow-Credentials"] = "true"
-    response["Access-Control-Allow-Headers"] = "Content-Type, X-CSRFToken"
+    response["Access-Control-Allow-Headers"] = "Content-Type, X-CSRFToken, X-Admin-Token"
     response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
+
+
+def _is_admin(request) -> bool:
+    """Check admin token header against ADMIN_SECRET env var (fallback: Django is_staff)."""
+    secret = os.environ.get("ADMIN_SECRET", "")
+    token  = request.headers.get("X-Admin-Token", "")
+    if secret and token and token == secret:
+        return True
+    return request.user.is_authenticated and request.user.is_staff
 
 
 def versions_list(request):
@@ -105,7 +114,7 @@ def admin_upload(request):
     if request.method == 'OPTIONS':
         return _cors(JsonResponse({}), request)
 
-    if not request.user.is_authenticated or not request.user.is_staff:
+    if not _is_admin(request):
         return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
 
     if request.method != 'POST':
@@ -160,7 +169,7 @@ def admin_request_upload(request):
     if request.method == 'OPTIONS':
         return _cors(JsonResponse({}), request)
 
-    if not request.user.is_authenticated or not request.user.is_staff:
+    if not _is_admin(request):
         return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
 
     try:
@@ -250,7 +259,7 @@ def admin_confirm_upload(request):
     if request.method == 'OPTIONS':
         return _cors(JsonResponse({}), request)
 
-    if not request.user.is_authenticated or not request.user.is_staff:
+    if not _is_admin(request):
         return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
 
     try:
@@ -302,7 +311,7 @@ def admin_versions_list(request):
     if request.method == 'OPTIONS':
         return _cors(JsonResponse({}), request)
 
-    if not request.user.is_authenticated or not request.user.is_staff:
+    if not _is_admin(request):
         return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
 
     slug = request.GET.get('product', 'neton_payroll')
@@ -336,7 +345,7 @@ def admin_toggle_version(request, version_id):
     if request.method == 'OPTIONS':
         return _cors(JsonResponse({}), request)
 
-    if not request.user.is_authenticated or not request.user.is_staff:
+    if not _is_admin(request):
         return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
 
     try:
