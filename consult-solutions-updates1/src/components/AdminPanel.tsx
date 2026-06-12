@@ -320,7 +320,7 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
   const [file, setFile] = useState<File | null>(null);
 
   const load = () => {
-    fetch(`${apiBase}/api/software/versions/?product=neton_payroll`)
+    fetch(`${apiBase}/api/software/admin/versions/?product=neton_payroll`, { credentials: 'include', headers: _adminHdr() })
       .then(r => r.json())
       .then(d => setVersions(d.versions || []))
       .catch(() => {});

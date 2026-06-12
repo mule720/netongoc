@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobileMenu from "@/components/MobileMenu";
 
-const API = import.meta.env.VITE_API_URL || "";
+const API = "";
 
 interface Version {
   id: string;

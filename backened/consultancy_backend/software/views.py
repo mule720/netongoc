@@ -99,7 +99,11 @@ def download_url(request, version_id):
     except SoftwareVersion.DoesNotExist:
         return _cors(JsonResponse({'error': 'Version not found'}, status=404), request)
 
-    file_url = request.build_absolute_uri(version.file.url)
+    try:
+        file_url = version.file.url  # django-storages generates signed GCS URL
+    except Exception:
+        bucket = getattr(settings, 'GS_BUCKET_NAME', os.environ.get('GCS_MEDIA_BUCKET', ''))
+        file_url = f"https://storage.googleapis.com/{bucket}/{version.file.name}"
     return _cors(JsonResponse({
         'ok': True,
         'url': file_url,
@@ -293,8 +297,8 @@ def admin_confirm_upload(request):
         is_latest=is_latest,
         is_active=True,
     )
-    # Set the file field to point at the GCS path directly (no re-upload)
-    sv.file.name = gcs_path
+    # Assign the GCS path directly to the file field name so no re-upload happens
+    sv.file = gcs_path
     sv.save()
 
     return _cors(JsonResponse({
