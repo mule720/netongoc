@@ -50,9 +50,16 @@ WEBHOOK_SECRET       = os.environ.get("LICENSE_WEBHOOK_SECRET", "neton-webhook-s
 HEARTBEAT_GRACE_DAYS = 7
 
 
-def _cors(response):
-    response["Access-Control-Allow-Origin"] = "*"
-    response["Access-Control-Allow-Headers"] = "Content-Type, X-Webhook-Signature"
+_ALLOWED_ORIGINS = {"https://netongoc.com", "https://www.netongoc.com"}
+
+
+def _cors(response, request=None):
+    origin = (request.headers.get("Origin") or "") if request else ""
+    allowed = origin if origin in _ALLOWED_ORIGINS else "https://netongoc.com"
+    response["Access-Control-Allow-Origin"] = allowed
+    response["Access-Control-Allow-Credentials"] = "true"
+    response["Access-Control-Allow-Headers"] = "Content-Type, X-Webhook-Signature, X-CSRFToken"
+    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
 
