@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('versions/',                    views.versions_list,        name='software-versions'),
+    path('download-public/<uuid:version_id>/', views.download_public, name='software-download-public'),
     path('download/<uuid:version_id>/',  views.download_url,         name='software-download'),
     path('admin/request-upload/',            views.admin_request_upload,  name='software-admin-request-upload'),
     path('admin/confirm-upload/',            views.admin_confirm_upload,  name='software-admin-confirm-upload'),

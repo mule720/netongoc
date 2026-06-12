@@ -69,6 +69,24 @@ def versions_list(request):
 
 
 @csrf_exempt
+def download_public(request, version_id):
+    """GET /api/software/download-public/<version_id>/ — no license required, redirects to GCS URL."""
+    if request.method == 'OPTIONS':
+        return _cors(JsonResponse({}), request)
+    try:
+        version = SoftwareVersion.objects.get(id=version_id, is_active=True)
+    except SoftwareVersion.DoesNotExist:
+        return _cors(JsonResponse({'error': 'Version not found'}, status=404), request)
+    try:
+        file_url = version.file.url
+    except Exception:
+        bucket = getattr(settings, 'GS_BUCKET_NAME', os.environ.get('GCS_MEDIA_BUCKET', ''))
+        file_url = f"https://storage.googleapis.com/{bucket}/{version.file.name}"
+    from django.http import HttpResponseRedirect
+    return HttpResponseRedirect(file_url)
+
+
+@csrf_exempt
 def download_url(request, version_id):
     """POST /api/software/download/<version_id>/ — validates license key, returns file URL."""
     if request.method == 'OPTIONS':

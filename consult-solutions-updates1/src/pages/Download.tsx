@@ -38,28 +38,14 @@ export default function Download() {
       .catch(() => {});
   }, []);
 
-  const handleDownload = async () => {
-    if (!licenseKey.trim() || !selectedVersion) return;
-    setStep("loading");
-    setErrorMsg("");
-    try {
-      const res = await fetch(`${API}/api/software/download/${selectedVersion.id}/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ license_key: licenseKey.trim().toUpperCase() }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        setErrorMsg(data.error || "Download failed. Please check your license key.");
-        setStep("error");
-        return;
-      }
-      setDownloadInfo({ url: data.url, file_name: data.file_name, company: data.company });
-      setStep("ready");
-    } catch {
-      setErrorMsg("Network error. Please try again.");
-      setStep("error");
-    }
+  const handleDownload = () => {
+    if (!selectedVersion) return;
+    // Build direct GCS public URL — no license key needed to download
+    const fname = selectedVersion.file_name || `NetonPayrollPro_Setup_v${selectedVersion.version}.exe`;
+    const link = document.createElement("a");
+    link.href = `${API}/api/software/download-public/${selectedVersion.id}/`;
+    link.download = fname;
+    link.click();
   };
 
   return (
@@ -72,7 +58,7 @@ export default function Download() {
         <div style={{ fontSize: "3rem", marginBottom: "0.75rem" }}>💾</div>
         <h1 style={{ margin: "0 0 0.5rem", fontWeight: 900, fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>Download Neton Payroll Pro</h1>
         <p style={{ color: "rgba(255,255,255,0.7)", margin: 0, fontSize: "1rem" }}>
-          Enter your license key to access your download
+          Select a version and download — activate with your license key inside the app
         </p>
       </div>
 
@@ -86,7 +72,7 @@ export default function Download() {
               <span style={{ fontSize: "1.5rem" }}>💾</span>
               <div>
                 <div style={{ fontWeight: 900, color: "#0C1F5C", fontSize: "1.05rem" }}>Neton Payroll Pro</div>
-                <div style={{ fontSize: "0.78rem", color: "#888" }}>Select a version below, then enter your license key to download</div>
+                <div style={{ fontSize: "0.78rem", color: "#888" }}>Select a version to download — no license key required here</div>
               </div>
             </div>
             {/* Column headers */}
@@ -131,74 +117,29 @@ export default function Download() {
           </div>
         )}
 
-        {/* License key + download */}
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8ecf4", padding: "2rem" }}>
-          {step !== "ready" && (
+        {/* Download button */}
+        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8ecf4", padding: "1.75rem 2rem", textAlign: "center" }}>
+          {selectedVersion ? (
             <>
-              <h3 style={{ margin: "0 0 0.5rem", color: "#0C1F5C", fontWeight: 800 }}>Enter Your License Key</h3>
-              <p style={{ margin: "0 0 1.25rem", color: "#666", fontSize: "0.9rem" }}>
-                Your license key was emailed to you after purchase. Format: XXXX-XXXX-XXXX-XXXX-XXXX
+              <p style={{ margin: "0 0 1.25rem", color: "#555", fontSize: "0.9rem" }}>
+                Downloading <strong style={{ color: "#0C1F5C" }}>{selectedVersion.file_name || `NetonPayrollPro_Setup_v${selectedVersion.version}.exe`}</strong>
               </p>
-              <input
-                value={licenseKey}
-                onChange={(e) => { setLicenseKey(e.target.value.toUpperCase()); setStep("enter"); setErrorMsg(""); }}
-                placeholder="XXXX-XXXX-XXXX-XXXX-XXXX"
-                maxLength={29}
-                style={{
-                  width: "100%", padding: "0.8rem 1rem", borderRadius: 8,
-                  border: "2px solid #e8ecf4", fontSize: "1rem", fontFamily: "monospace",
-                  letterSpacing: "2px", boxSizing: "border-box", marginBottom: "1rem",
-                  outline: "none", color: "#1a1a1a", background: "#fff",
-                }}
-              />
-              {step === "error" && (
-                <div style={{ background: "#fff0f0", border: "1px solid #ffcccc", borderRadius: 8, padding: "0.75rem 1rem", color: "#c0392b", fontSize: "0.88rem", marginBottom: "1rem" }}>
-                  {errorMsg}
-                </div>
-              )}
               <button
                 onClick={handleDownload}
-                disabled={step === "loading" || !licenseKey.trim() || !selectedVersion}
                 style={{
-                  width: "100%", padding: "0.9rem", background: "#F5C200", border: "none",
-                  borderRadius: 8, fontWeight: 800, fontSize: "1rem", color: "#0C1F5C",
-                  cursor: step === "loading" ? "wait" : "pointer", opacity: !licenseKey.trim() ? 0.6 : 1,
+                  display: "inline-block", padding: "0.9rem 2.5rem", background: "#0C1F5C",
+                  color: "#F5C200", border: "none", borderRadius: 8, fontWeight: 800,
+                  fontSize: "1rem", cursor: "pointer", marginBottom: "1rem",
                 }}>
-                {step === "loading" ? "Verifying…" : "Verify & Get Download Link"}
+                ⬇ Download Now
               </button>
-
-              <p style={{ textAlign: "center", fontSize: "0.78rem", color: "#aaa", marginTop: "1rem" }}>
-                Don't have a license?{" "}
-                <Link to="/products" style={{ color: "#0C1F5C", fontWeight: 700 }}>Buy one here →</Link>
+              <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", color: "#aaa" }}>
+                After installing, open the app and enter your license key to activate.{" "}
+                <Link to="/products" style={{ color: "#0C1F5C", fontWeight: 700 }}>Buy a license →</Link>
               </p>
             </>
-          )}
-
-          {step === "ready" && downloadInfo && (
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "0.75rem" }}>✅</div>
-              <h3 style={{ color: "#0C1F5C", fontWeight: 900, margin: "0 0 0.4rem" }}>License Verified!</h3>
-              <p style={{ color: "#666", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>
-                Welcome, <strong>{downloadInfo.company}</strong>. Your download is ready.
-              </p>
-              <a
-                href={downloadInfo.url}
-                download={downloadInfo.file_name}
-                style={{
-                  display: "inline-block", background: "#0C1F5C", color: "#F5C200",
-                  borderRadius: 8, padding: "0.9rem 2.5rem", fontWeight: 800,
-                  fontSize: "1rem", textDecoration: "none", marginBottom: "1rem",
-                }}>
-                ⬇ Download {downloadInfo.file_name}
-              </a>
-              <div style={{ marginTop: "1rem" }}>
-                <button
-                  onClick={() => { setStep("enter"); setLicenseKey(""); setDownloadInfo(null); }}
-                  style={{ background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: "0.85rem" }}>
-                  Download a different version
-                </button>
-              </div>
-            </div>
+          ) : (
+            <p style={{ color: "#888", fontSize: "0.9rem", margin: 0 }}>Select a version above to download.</p>
           )}
         </div>
 
