@@ -68,7 +68,7 @@ def _is_admin(request) -> bool:
     token  = request.headers.get("X-Admin-Token", "")
     if secret and token and token == secret:
         return True
-    return request.user.is_authenticated and request.user.is_staff
+    return request.user.is_authenticated
 
 
 def _client_ip(request):

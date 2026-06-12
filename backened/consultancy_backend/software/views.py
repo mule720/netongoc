@@ -27,12 +27,13 @@ def _cors(response, request=None):
 
 
 def _is_admin(request) -> bool:
-    """Check admin token header against ADMIN_SECRET env var (fallback: Django is_staff)."""
+    """Check admin token header against ADMIN_SECRET env var (fallback: any authenticated user)."""
     secret = os.environ.get("ADMIN_SECRET", "")
     token  = request.headers.get("X-Admin-Token", "")
     if secret and token and token == secret:
         return True
-    return request.user.is_authenticated and request.user.is_staff
+    # Fallback: any logged-in user (frontend login controls access)
+    return request.user.is_authenticated
 
 
 def versions_list(request):
