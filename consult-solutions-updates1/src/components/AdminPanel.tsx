@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 
-const _ADMIN_TOKEN = import.meta.env.VITE_ADMIN_TOKEN || '';
+const _LS_KEY = 'neton_admin_token';
+const _getAdminToken = () => localStorage.getItem(_LS_KEY) || import.meta.env.VITE_ADMIN_TOKEN || '';
 const _adminHdr = (extra?: Record<string, string>) => ({
   'Content-Type': 'application/json',
-  'X-Admin-Token': _ADMIN_TOKEN,
+  'X-Admin-Token': _getAdminToken(),
   ...extra,
 });
 
@@ -64,6 +65,8 @@ export default function AdminPanel() {
   };
 
   const { toast } = useToast();
+  const [adminToken, setAdminToken] = useState(_getAdminToken);
+  const [tokenInput, setTokenInput] = useState('');
   const [tab, setTab] = useState('consultancy');
   const [loading, setLoading] = useState(false);
   const [consultancy, setConsultancy] = useState<ConsultancyRequest[]>([]);
@@ -212,6 +215,30 @@ export default function AdminPanel() {
       <div className="mb-6">
         <div><h1 className="text-3xl font-bold">Admin Dashboard</h1><p className="text-slate-300">All sections restored + improved service editing flow.</p></div>
       </div>
+
+      {/* Admin token setup — only shown when token not yet saved */}
+      {!adminToken && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+          <span className="text-amber-400 text-sm font-semibold whitespace-nowrap">🔑 Admin token:</span>
+          <input
+            type="password"
+            placeholder="Paste your ADMIN_SECRET here"
+            value={tokenInput}
+            onChange={e => setTokenInput(e.target.value)}
+            className="flex-1 rounded bg-slate-800 border border-slate-600 px-3 py-1.5 text-sm text-white outline-none"
+          />
+          <button
+            onClick={() => { localStorage.setItem(_LS_KEY, tokenInput); setAdminToken(tokenInput); setTokenInput(''); toast({ title: 'Token saved' }); }}
+            className="rounded bg-amber-500 px-4 py-1.5 text-sm font-bold text-black hover:bg-amber-400"
+          >Save</button>
+        </div>
+      )}
+      {adminToken && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2">
+          <span className="text-green-400 text-xs">✓ Admin token active</span>
+          <button onClick={() => { localStorage.removeItem(_LS_KEY); setAdminToken(''); }} className="text-xs text-slate-400 hover:text-red-400">Clear token</button>
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-8 bg-slate-800 mb-6">
