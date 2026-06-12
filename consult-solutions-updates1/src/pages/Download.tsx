@@ -81,24 +81,32 @@ export default function Download() {
                 <span key={h} style={{ fontSize: "0.68rem", fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
               ))}
             </div>
-            {/* Rows — one per file, single line */}
+            {/* Rows — click anywhere to download */}
             {versions.map((v, i) => {
-              const selected = selectedVersion?.id === v.id;
               const fname = v.file_name || `NetonPayrollPro_Setup_v${v.version}.exe`;
+              const triggerDownload = () => {
+                setSelectedVersion(v);
+                const link = document.createElement("a");
+                link.href = `/api/software/download-public/${v.id}/`;
+                link.download = fname;
+                link.click();
+              };
               return (
                 <div
                   key={v.id}
-                  onClick={() => { setSelectedVersion(v); setStep("enter"); setDownloadInfo(null); }}
+                  onClick={triggerDownload}
                   style={{
                     display: "grid", gridTemplateColumns: "1fr 80px 100px 110px",
                     alignItems: "center", padding: "0.8rem 1.5rem",
                     cursor: "pointer",
-                    background: selected ? "#f0f4ff" : i % 2 === 0 ? "#fff" : "#fafbfd",
-                    borderLeft: `3px solid ${selected ? "#0C1F5C" : "transparent"}`,
+                    background: i % 2 === 0 ? "#fff" : "#fafbfd",
                     borderBottom: i < versions.length - 1 ? "1px solid #f0f2f8" : "none",
                     transition: "background 0.12s",
-                  }}>
-                  {/* Filename + optional LATEST badge — single line */}
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#f0f4ff")}
+                  onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#fafbfd")}
+                >
+                  {/* Filename + LATEST badge */}
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", overflow: "hidden" }}>
                     <span style={{ fontWeight: 600, color: "#0C1F5C", fontSize: "0.85rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fname}</span>
                     {v.is_latest && <span style={{ flexShrink: 0, background: "#F5C200", color: "#0C1F5C", borderRadius: 999, padding: "0.1rem 0.55rem", fontSize: "0.62rem", fontWeight: 800 }}>LATEST</span>}
@@ -107,41 +115,15 @@ export default function Download() {
                   <span style={{ fontSize: "0.82rem", color: "#555", fontWeight: 600 }}>{v.file_size_mb} MB</span>
                   {/* Date */}
                   <span style={{ fontSize: "0.8rem", color: "#888" }}>{v.uploaded_at}</span>
-                  {/* Select */}
-                  <span style={{ display: "inline-block", padding: "0.28rem 0.8rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 700, textAlign: "center", background: selected ? "#0C1F5C" : "#f0f4ff", color: selected ? "#F5C200" : "#0C1F5C" }}>
-                    {selected ? "✓ Selected" : "Select"}
+                  {/* Download button */}
+                  <span style={{ display: "inline-block", padding: "0.28rem 0.8rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 700, textAlign: "center", background: "#0C1F5C", color: "#F5C200" }}>
+                    ⬇ Download
                   </span>
                 </div>
               );
             })}
           </div>
         )}
-
-        {/* Download button */}
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8ecf4", padding: "1.75rem 2rem", textAlign: "center" }}>
-          {selectedVersion ? (
-            <>
-              <p style={{ margin: "0 0 1.25rem", color: "#555", fontSize: "0.9rem" }}>
-                Downloading <strong style={{ color: "#0C1F5C" }}>{selectedVersion.file_name || `NetonPayrollPro_Setup_v${selectedVersion.version}.exe`}</strong>
-              </p>
-              <button
-                onClick={handleDownload}
-                style={{
-                  display: "inline-block", padding: "0.9rem 2.5rem", background: "#0C1F5C",
-                  color: "#F5C200", border: "none", borderRadius: 8, fontWeight: 800,
-                  fontSize: "1rem", cursor: "pointer", marginBottom: "1rem",
-                }}>
-                ⬇ Download Now
-              </button>
-              <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", color: "#aaa" }}>
-                After installing, open the app and enter your license key to activate.{" "}
-                <Link to="/products" style={{ color: "#0C1F5C", fontWeight: 700 }}>Buy a license →</Link>
-              </p>
-            </>
-          ) : (
-            <p style={{ color: "#888", fontSize: "0.9rem", margin: 0 }}>Select a version above to download.</p>
-          )}
-        </div>
 
         {/* Install instructions */}
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8ecf4", padding: "1.5rem", marginTop: "1.5rem" }}>
