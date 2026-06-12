@@ -90,53 +90,39 @@ export default function Download() {
               </div>
             </div>
             {/* Column headers */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 90px 110px", padding: "0.5rem 1.5rem", background: "#f8f9fc", borderBottom: "1px solid #e8ecf4" }}>
-              {["Version", "Size", "Date", "Status"].map(h => (
-                <span key={h} style={{ fontSize: "0.7rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 100px 110px", padding: "0.45rem 1.5rem", background: "#f8f9fc", borderBottom: "1px solid #e8ecf4" }}>
+              {["File", "Size", "Date", ""].map(h => (
+                <span key={h} style={{ fontSize: "0.68rem", fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</span>
               ))}
             </div>
-            {/* Rows */}
+            {/* Rows — one per file, single line */}
             {versions.map((v, i) => {
               const selected = selectedVersion?.id === v.id;
+              const fname = v.file_name || `NetonPayrollPro_Setup_v${v.version}.exe`;
               return (
                 <div
                   key={v.id}
                   onClick={() => { setSelectedVersion(v); setStep("enter"); setDownloadInfo(null); }}
                   style={{
-                    display: "grid", gridTemplateColumns: "1fr 80px 90px 110px",
-                    alignItems: "center", padding: "0.85rem 1.5rem",
+                    display: "grid", gridTemplateColumns: "1fr 80px 100px 110px",
+                    alignItems: "center", padding: "0.8rem 1.5rem",
                     cursor: "pointer",
                     background: selected ? "#f0f4ff" : i % 2 === 0 ? "#fff" : "#fafbfd",
                     borderLeft: `3px solid ${selected ? "#0C1F5C" : "transparent"}`,
                     borderBottom: i < versions.length - 1 ? "1px solid #f0f2f8" : "none",
                     transition: "background 0.12s",
                   }}>
-                  {/* Version + badge */}
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
-                      <span style={{ fontWeight: 700, color: "#0C1F5C", fontSize: "0.88rem" }}>
-                        v{v.version}
-                      </span>
-                      {v.is_latest
-                        ? <span style={{ background: "#F5C200", color: "#0C1F5C", borderRadius: 999, padding: "0.1rem 0.55rem", fontSize: "0.62rem", fontWeight: 800 }}>LATEST</span>
-                        : <span style={{ background: "#f0f2f8", color: "#888", borderRadius: 999, padding: "0.1rem 0.55rem", fontSize: "0.62rem", fontWeight: 700 }}>OLDER</span>
-                      }
-                    </div>
-                    <div style={{ fontSize: "0.73rem", color: "#999", marginTop: "0.15rem" }}>
-                      {v.file_name || `NetonPayrollPro_Setup_v${v.version}.exe`}
-                    </div>
+                  {/* Filename + optional LATEST badge — single line */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", overflow: "hidden" }}>
+                    <span style={{ fontWeight: 600, color: "#0C1F5C", fontSize: "0.85rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fname}</span>
+                    {v.is_latest && <span style={{ flexShrink: 0, background: "#F5C200", color: "#0C1F5C", borderRadius: 999, padding: "0.1rem 0.55rem", fontSize: "0.62rem", fontWeight: 800 }}>LATEST</span>}
                   </div>
                   {/* Size */}
                   <span style={{ fontSize: "0.82rem", color: "#555", fontWeight: 600 }}>{v.file_size_mb} MB</span>
                   {/* Date */}
                   <span style={{ fontSize: "0.8rem", color: "#888" }}>{v.uploaded_at}</span>
-                  {/* Select button */}
-                  <span style={{
-                    display: "inline-block", padding: "0.3rem 0.8rem", borderRadius: 6,
-                    fontSize: "0.75rem", fontWeight: 700, textAlign: "center",
-                    background: selected ? "#0C1F5C" : "#f0f4ff",
-                    color: selected ? "#F5C200" : "#0C1F5C",
-                  }}>
+                  {/* Select */}
+                  <span style={{ display: "inline-block", padding: "0.28rem 0.8rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 700, textAlign: "center", background: selected ? "#0C1F5C" : "#f0f4ff", color: selected ? "#F5C200" : "#0C1F5C" }}>
                     {selected ? "✓ Selected" : "Select"}
                   </span>
                 </div>
