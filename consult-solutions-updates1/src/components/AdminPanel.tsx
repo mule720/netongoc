@@ -299,11 +299,11 @@ export default function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="software" className="space-y-4">
-          <SoftwareAdminTab apiBase={`${import.meta.env.VITE_API_URL || ''}`} />
+          <SoftwareAdminTab apiBase="" />
         </TabsContent>
 
         <TabsContent value="licenses" className="space-y-4">
-          <LicensesAdminTab apiBase={`${import.meta.env.VITE_API_URL || ''}`} />
+          <LicensesAdminTab apiBase="" />
         </TabsContent>
       </Tabs>
     </div>
