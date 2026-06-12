@@ -78,40 +78,31 @@ export default function Download() {
 
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "3rem 1.5rem" }}>
 
-        {/* Version selector */}
-        {versions.length > 0 && (
-          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8ecf4", padding: "1.5rem", marginBottom: "1.5rem" }}>
-            <h3 style={{ margin: "0 0 1rem", color: "#0C1F5C", fontWeight: 800, fontSize: "1rem" }}>Choose Version</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-              {versions.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => { setSelectedVersion(v); setStep("enter"); setDownloadInfo(null); }}
-                  style={{
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                    padding: "0.75rem 1rem", borderRadius: 8,
-                    border: `2px solid ${selectedVersion?.id === v.id ? "#0C1F5C" : "#e8ecf4"}`,
-                    background: selectedVersion?.id === v.id ? "#f0f4ff" : "#fff",
-                    cursor: "pointer", textAlign: "left",
-                  }}>
-                  <div>
-                    <span style={{ fontWeight: 700, color: "#0C1F5C" }}>v{v.version}</span>
-                    {v.is_latest && (
-                      <span style={{ marginLeft: "0.5rem", background: "#F5C200", color: "#0C1F5C", borderRadius: 999, padding: "0.1rem 0.6rem", fontSize: "0.7rem", fontWeight: 800 }}>
-                        LATEST
-                      </span>
-                    )}
-                    {v.release_notes && (
-                      <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.2rem" }}>{v.release_notes}</div>
-                    )}
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "1rem" }}>
-                    <div style={{ fontSize: "0.8rem", color: "#888" }}>{v.file_size_mb} MB</div>
-                    <div style={{ fontSize: "0.75rem", color: "#aaa" }}>{v.uploaded_at}</div>
-                  </div>
-                </button>
-              ))}
+        {/* File info card */}
+        {selectedVersion && (
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8ecf4", padding: "1.25rem 1.5rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <div style={{ background: "#f0f4ff", borderRadius: 10, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", flexShrink: 0 }}>💾</div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{ fontWeight: 800, color: "#0C1F5C", fontSize: "0.95rem" }}>{selectedVersion.file_name || `NetonPayrollPro_Setup_v${selectedVersion.version}.exe`}</span>
+                  {selectedVersion.is_latest && (
+                    <span style={{ background: "#F5C200", color: "#0C1F5C", borderRadius: 999, padding: "0.1rem 0.55rem", fontSize: "0.65rem", fontWeight: 800 }}>LATEST</span>
+                  )}
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "#888", marginTop: "0.2rem" }}>
+                  {selectedVersion.file_size_mb} MB &nbsp;·&nbsp; v{selectedVersion.version} &nbsp;·&nbsp; {selectedVersion.uploaded_at}
+                </div>
+              </div>
             </div>
+            {versions.length > 1 && (
+              <select
+                value={selectedVersion.id}
+                onChange={e => { const v = versions.find(x => x.id === e.target.value); if (v) { setSelectedVersion(v); setStep("enter"); setDownloadInfo(null); } }}
+                style={{ fontSize: "0.8rem", border: "1px solid #e8ecf4", borderRadius: 6, padding: "0.3rem 0.6rem", color: "#0C1F5C", background: "#fff", cursor: "pointer" }}>
+                {versions.map(v => <option key={v.id} value={v.id}>v{v.version}{v.is_latest ? " (Latest)" : ""}</option>)}
+              </select>
+            )}
           </div>
         )}
 

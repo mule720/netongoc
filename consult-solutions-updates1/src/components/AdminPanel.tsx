@@ -402,6 +402,14 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
     load();
   };
 
+  const deleteVersion = async (id: string, fileName: string) => {
+    if (!window.confirm(`Delete ${fileName}? This cannot be undone.`)) return;
+    await fetch(`${apiBase}/api/software/admin/delete/${id}/`, {
+      method: 'DELETE', credentials: 'include', headers: _adminHdr(),
+    });
+    load();
+  };
+
   return (
     <div className="space-y-4">
       {/* Upload form */}
@@ -454,14 +462,24 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
                 {v.release_notes && <div className="text-xs text-slate-300 mt-1">{v.release_notes}</div>}
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                <Button size="sm" variant="outline" className="border-slate-500 text-white hover:bg-slate-700 text-xs"
-                  onClick={() => toggle(v.id, 'is_latest', !v.is_latest)}>
+                <button
+                  onClick={() => toggle(v.id, 'is_latest', !v.is_latest)}
+                  className="text-xs px-3 py-1.5 rounded font-semibold border"
+                  style={{ background: '#1e293b', color: '#94a3b8', borderColor: '#475569' }}>
                   {v.is_latest ? 'Unset Latest' : 'Set Latest'}
-                </Button>
-                <Button size="sm" variant="outline" className={`text-xs ${v.is_active ? 'border-rose-500 text-rose-400 hover:bg-rose-900' : 'border-emerald-500 text-emerald-400 hover:bg-emerald-900'}`}
-                  onClick={() => toggle(v.id, 'is_active', !v.is_active)}>
+                </button>
+                <button
+                  onClick={() => toggle(v.id, 'is_active', !v.is_active)}
+                  className="text-xs px-3 py-1.5 rounded font-semibold"
+                  style={{ background: v.is_active ? '#7f1d1d' : '#14532d', color: v.is_active ? '#fca5a5' : '#86efac', border: 'none' }}>
                   {v.is_active ? 'Hide' : 'Show'}
-                </Button>
+                </button>
+                <button
+                  onClick={() => deleteVersion(v.id, v.file_name || `v${v.version}`)}
+                  className="text-xs px-3 py-1.5 rounded font-semibold"
+                  style={{ background: '#450a0a', color: '#f87171', border: 'none' }}>
+                  Delete
+                </button>
               </div>
             </div>
           ))}

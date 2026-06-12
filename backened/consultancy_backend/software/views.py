@@ -345,6 +345,21 @@ def admin_versions_list(request):
 
 
 @csrf_exempt
+def admin_delete_version(request, version_id):
+    """DELETE /api/software/admin/delete/<version_id>/"""
+    if request.method == 'OPTIONS':
+        return _cors(JsonResponse({}), request)
+    if not _is_admin(request):
+        return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
+    try:
+        sv = SoftwareVersion.objects.get(id=version_id)
+    except SoftwareVersion.DoesNotExist:
+        return _cors(JsonResponse({'error': 'Not found'}, status=404), request)
+    sv.delete()
+    return _cors(JsonResponse({'ok': True}), request)
+
+
+@csrf_exempt
 def admin_toggle_version(request, version_id):
     """POST /api/software/admin/toggle/<version_id>/"""
     if request.method == 'OPTIONS':

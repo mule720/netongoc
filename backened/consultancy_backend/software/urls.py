@@ -9,4 +9,5 @@ urlpatterns = [
     path('admin/upload/',                    views.admin_upload,          name='software-admin-upload'),
     path('admin/versions/',                  views.admin_versions_list,   name='software-admin-versions'),
     path('admin/toggle/<uuid:version_id>/',  views.admin_toggle_version,  name='software-admin-toggle'),
+    path('admin/delete/<uuid:version_id>/',  views.admin_delete_version,  name='software-admin-delete'),
 ]
