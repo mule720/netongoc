@@ -23,16 +23,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, onSectionClick }) => {
               <Menu className="h-6 w-6" />
             </Button>
             <div className="flex items-center space-x-3">
-              <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Link to="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem' }}>
                 <img
                   src="https://d64gsuwffb70l.cloudfront.net/68753d9e71414e5e3628056e_1753211163235_f5e9ff17.png"
                   alt="NETON Limited Logo"
-                  className="h-12 w-auto"
+                  className="h-10 w-auto"
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                  <span style={{ fontWeight: 900, fontSize: '1rem', color: '#F5C200', letterSpacing: '0.05em' }}>NETON</span>
-                  <span style={{ fontWeight: 500, fontSize: '0.6rem', color: 'rgba(245,194,0,0.7)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>LIMITED</span>
-                </div>
+                <span style={{ fontWeight: 700, fontSize: '0.65rem', color: '#F5C200', letterSpacing: '0.2em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>NETON LIMITED</span>
               </Link>
             </div>
           </div>
