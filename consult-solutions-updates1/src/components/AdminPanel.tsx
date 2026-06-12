@@ -291,30 +291,69 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
 
   useEffect(() => { load(); }, []);
 
+  const [uploadProgress, setUploadProgress] = useState('');
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !form.version.trim()) { toast({ title: 'Error', description: 'Version and file are required.' }); return; }
     setUploading(true);
-    const fd = new FormData();
-    fd.append('product_slug', 'neton_payroll');
-    fd.append('version', form.version.trim());
-    fd.append('release_notes', form.release_notes);
-    fd.append('is_latest', String(form.is_latest));
-    fd.append('file', file);
     try {
-      const res = await fetch(`${apiBase}/api/software/admin/upload/`, { method: 'POST', body: fd, credentials: 'include' });
-      const data = await res.json();
-      if (data.ok) {
-        toast({ title: 'Uploaded!', description: `v${data.version} uploaded successfully.` });
+      // Step 1: request a GCS signed URL (bypasses Cloud Run 32 MB limit)
+      setUploadProgress('Getting upload URL…');
+      const reqRes = await fetch(`${apiBase}/api/software/admin/request-upload/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_name: file.name,
+          content_type: file.type || 'application/octet-stream',
+          version: form.version.trim(),
+          release_notes: form.release_notes,
+          is_latest: form.is_latest,
+          product_slug: 'neton_payroll',
+        }),
+      });
+      const reqData = await reqRes.json();
+      if (!reqData.ok) { toast({ title: 'Error', description: reqData.error || 'Could not get upload URL.' }); setUploading(false); setUploadProgress(''); return; }
+
+      // Step 2: PUT the file directly to GCS (no size limit)
+      setUploadProgress(`Uploading ${(file.size / 1024 / 1024).toFixed(1)} MB to cloud…`);
+      const putRes = await fetch(reqData.upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      });
+      if (!putRes.ok) { toast({ title: 'Error', description: `Upload to GCS failed: ${putRes.status}` }); setUploading(false); setUploadProgress(''); return; }
+
+      // Step 3: confirm the upload and create the version record
+      setUploadProgress('Registering version…');
+      const confRes = await fetch(`${apiBase}/api/software/admin/confirm-upload/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gcs_path: reqData.gcs_path,
+          version: reqData.version,
+          release_notes: reqData.release_notes,
+          is_latest: reqData.is_latest,
+          product_slug: reqData.product_slug,
+          file_name: file.name,
+          file_size_mb: file.size / 1024 / 1024,
+        }),
+      });
+      const confData = await confRes.json();
+      if (confData.ok) {
+        toast({ title: 'Uploaded!', description: `v${confData.version} published successfully.` });
         setForm({ version: '', release_notes: '', is_latest: true });
         setFile(null);
         (document.getElementById('sw-file-input') as HTMLInputElement).value = '';
         load();
       } else {
-        toast({ title: 'Error', description: data.error || 'Upload failed.' });
+        toast({ title: 'Error', description: confData.error || 'Confirm step failed.' });
       }
-    } catch { toast({ title: 'Error', description: 'Network error.' }); }
+    } catch (err: any) { toast({ title: 'Error', description: err?.message || 'Network error.' }); }
     setUploading(false);
+    setUploadProgress('');
   };
 
   const toggle = async (id: string, field: 'is_active' | 'is_latest', value: boolean) => {
@@ -355,7 +394,7 @@ function SoftwareAdminTab({ apiBase }: { apiBase: string }) {
               {file && <p className="text-xs text-slate-400 mt-1">{file.name} — {(file.size / 1024 / 1024).toFixed(1)} MB</p>}
             </div>
             <Button type="submit" disabled={uploading} className="bg-amber-500 text-black hover:bg-amber-400 font-bold">
-              {uploading ? 'Uploading…' : '⬆ Upload Version'}
+              {uploading ? (uploadProgress || 'Uploading…') : '⬆ Upload Version'}
             </Button>
           </form>
         </CardContent>

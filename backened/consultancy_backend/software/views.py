@@ -1,5 +1,8 @@
+import datetime
 import json
 import os
+import requests as http_requests
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -143,6 +146,153 @@ def admin_upload(request):
         'file_name': sv.file_name,
         'file_size_mb': round(size_mb, 1),
         'is_latest': sv.is_latest,
+    }), request)
+
+
+@csrf_exempt
+def admin_request_upload(request):
+    """
+    POST /api/software/admin/request-upload/
+    Body: { "file_name": "setup.exe", "content_type": "application/octet-stream",
+            "version": "1.0.0", "release_notes": "...", "is_latest": true, "product_slug": "neton_payroll" }
+    Returns a GCS signed URL the browser uploads to directly (bypasses Cloud Run 32 MB limit).
+    """
+    if request.method == 'OPTIONS':
+        return _cors(JsonResponse({}), request)
+
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
+
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return _cors(JsonResponse({'error': 'Invalid JSON'}, status=400), request)
+
+    file_name    = (body.get('file_name') or '').strip()
+    content_type = (body.get('content_type') or 'application/octet-stream').strip()
+    version_str  = (body.get('version') or '').strip()
+    release_notes = (body.get('release_notes') or '').strip()
+    is_latest    = bool(body.get('is_latest', True))
+    slug         = (body.get('product_slug') or 'neton_payroll').strip()
+
+    if not file_name or not version_str:
+        return _cors(JsonResponse({'error': 'file_name and version are required'}, status=400), request)
+
+    bucket_name  = getattr(settings, 'GS_BUCKET_NAME', os.environ.get('GCS_MEDIA_BUCKET', ''))
+    if not bucket_name:
+        return _cors(JsonResponse({'error': 'GCS bucket not configured'}, status=500), request)
+
+    gcs_path = f'software/{slug}_v{version_str}_{file_name}'
+
+    # Generate signed URL via Cloud Run metadata server (no key file needed)
+    try:
+        # Get access token from metadata server
+        token_resp = http_requests.get(
+            'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token',
+            headers={'Metadata-Flavor': 'Google'},
+            timeout=5,
+        )
+        token_resp.raise_for_status()
+        access_token = token_resp.json()['access_token']
+
+        # Get service account email
+        sa_resp = http_requests.get(
+            'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email',
+            headers={'Metadata-Flavor': 'Google'},
+            timeout=5,
+        )
+        sa_resp.raise_for_status()
+        service_account_email = sa_resp.text.strip()
+
+        from google.cloud import storage
+        from google.oauth2.credentials import Credentials
+
+        creds = Credentials(token=access_token)
+        client = storage.Client(credentials=creds, project=os.environ.get('GOOGLE_CLOUD_PROJECT', ''))
+        bucket = client.bucket(bucket_name)
+        blob   = bucket.blob(gcs_path)
+
+        signed_url = blob.generate_signed_url(
+            version='v4',
+            expiration=datetime.timedelta(minutes=60),
+            method='PUT',
+            content_type=content_type,
+            service_account_email=service_account_email,
+            access_token=access_token,
+        )
+
+        return _cors(JsonResponse({
+            'ok':           True,
+            'upload_url':   signed_url,
+            'gcs_path':     gcs_path,
+            'version':      version_str,
+            'release_notes': release_notes,
+            'is_latest':    is_latest,
+            'product_slug': slug,
+            'file_name':    file_name,
+            'content_type': content_type,
+        }), request)
+
+    except Exception as exc:
+        return _cors(JsonResponse({'error': f'Could not generate upload URL: {exc}'}, status=500), request)
+
+
+@csrf_exempt
+def admin_confirm_upload(request):
+    """
+    POST /api/software/admin/confirm-upload/
+    Called after the browser finishes uploading to GCS.
+    Body: { "gcs_path": "software/...", "version": "1.0", "release_notes": "...",
+            "is_latest": true, "product_slug": "neton_payroll", "file_name": "setup.exe",
+            "file_size_mb": 45.2 }
+    Creates the SoftwareVersion record pointing at the GCS object.
+    """
+    if request.method == 'OPTIONS':
+        return _cors(JsonResponse({}), request)
+
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return _cors(JsonResponse({'error': 'Admin access required'}, status=403), request)
+
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return _cors(JsonResponse({'error': 'Invalid JSON'}, status=400), request)
+
+    gcs_path     = (body.get('gcs_path') or '').strip()
+    version_str  = (body.get('version') or '').strip()
+    release_notes = (body.get('release_notes') or '').strip()
+    is_latest    = bool(body.get('is_latest', True))
+    slug         = (body.get('product_slug') or 'neton_payroll').strip()
+    file_name    = (body.get('file_name') or '').strip()
+    file_size_mb = float(body.get('file_size_mb') or 0)
+
+    if not gcs_path or not version_str:
+        return _cors(JsonResponse({'error': 'gcs_path and version required'}, status=400), request)
+
+    product, _ = SoftwareProduct.objects.get_or_create(
+        slug=slug,
+        defaults={'name': 'Neton Payroll Pro', 'description': 'Payroll software for Zambian businesses'}
+    )
+
+    sv = SoftwareVersion(
+        product=product,
+        version=version_str,
+        release_notes=release_notes,
+        file_name=file_name,
+        file_size_mb=file_size_mb,
+        is_latest=is_latest,
+        is_active=True,
+    )
+    # Set the file field to point at the GCS path directly (no re-upload)
+    sv.file.name = gcs_path
+    sv.save()
+
+    return _cors(JsonResponse({
+        'ok':          True,
+        'id':          str(sv.id),
+        'version':     sv.version,
+        'file_name':   sv.file_name,
+        'is_latest':   sv.is_latest,
     }), request)
 
 
